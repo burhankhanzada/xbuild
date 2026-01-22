@@ -44,9 +44,15 @@ pub fn build(env: &BuildEnv, libraries: Vec<(Target, PathBuf)>, out: &Path) -> R
     std::fs::create_dir_all(&kotlin)?;
     std::fs::write(gradle.join("build.gradle"), BUILD_GRADLE)?;
     std::fs::write(gradle.join("gradle.properties"), GRADLE_PROPERTIES)?;
-    std::fs::write(gradle.join("settings.gradle"), SETTINGS_GRADLE)?;
 
     let config = env.config().android();
+
+    let mut settings = String::from_utf8(SETTINGS_GRADLE.to_vec())?;
+    if config.assets.is_empty() {
+        settings = settings.replace("include ':baseAssets'", "");
+    }
+    std::fs::write(gradle.join("settings.gradle"), settings)?;
+
     let mut manifest = config.manifest.clone();
 
     let package = manifest.package.take().unwrap_or_default();
