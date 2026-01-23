@@ -232,7 +232,33 @@ pub fn build(env: &BuildEnv, libraries: Vec<(Target, PathBuf)>, out: &Path) -> R
             (Format::Aab, Opt::Release) => "app-release.aab",
             _ => unreachable!(),
         });
-    std::fs::copy(output, out)?;
+    if format == Format::Aab {
+        let file = std::fs::File::open(&output)?;
+        let mut archive = zip::ZipArchive::new(file)?;
+        let out_file = std::fs::File::create(out)?;
+        let mut writer = zip::ZipWriter::new(out_file);
+
+        for i in 0..archive.len() {
+            let mut file = archive.by_index(i)?;
+            let name = file.name().to_string();
+            if name.starts_with("META-INF/")
+                && (name.ends_with(".SF")
+                    || name.ends_with(".RSA")
+                    || name.ends_with(".DSA")
+                    || name.ends_with(".EC"))
+            {
+                continue;
+            }
+            let options = zip::write::FileOptions::default()
+                .compression_method(file.compression_method())
+                .unix_permissions(file.unix_mode().unwrap_or(0o644));
+            writer.start_file(&name, options)?;
+            std::io::copy(&mut file, &mut writer)?;
+        }
+        writer.finish()?;
+    } else {
+        std::fs::copy(&output, out)?;
+    }
 
     if format == Format::Aab {
         if let Some(pem) = env.target().pem() {
@@ -271,6 +297,15 @@ pub fn build(env: &BuildEnv, libraries: Vec<(Target, PathBuf)>, out: &Path) -> R
                     .arg("SHA-256")
                     .arg(out)
                     .arg(alias),
+            )?;
+
+            task::run(
+                Command::new(&jarsigner)
+                    .current_dir(&gradle)
+                    .arg("-verify")
+                    .arg("-verbose")
+                    .arg("-certs")
+                    .arg(out),
             )?;
 
             let _ = std::fs::remove_file(keystore);
