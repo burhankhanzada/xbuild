@@ -250,7 +250,7 @@ pub fn build(env: &BuildEnv, libraries: Vec<(Target, PathBuf)>, out: &Path) -> R
                 continue;
             }
             let options = zip::write::FileOptions::default()
-                .compression_method(file.compression_method())
+                .compression_method(file.compression())
                 .unix_permissions(file.unix_mode().unwrap_or(0o644));
             writer.start_file(&name, options)?;
             std::io::copy(&mut file, &mut writer)?;
@@ -284,7 +284,7 @@ pub fn build(env: &BuildEnv, libraries: Vec<(Target, PathBuf)>, out: &Path) -> R
             )?;
 
             task::run(
-                Command::new(jarsigner)
+                Command::new(&jarsigner)
                     .current_dir(&gradle)
                     .arg("-keystore")
                     .arg(&keystore)
