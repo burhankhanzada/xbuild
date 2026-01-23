@@ -414,7 +414,6 @@ impl AssetPath {
 }
 
 #[derive(Deserialize)]
-#[serde(deny_unknown_fields)]
 struct RawConfig {
     #[serde(flatten)]
     generic: Option<GenericConfig>,
@@ -426,7 +425,6 @@ struct RawConfig {
 }
 
 #[derive(Clone, Debug, Default, Deserialize)]
-#[serde(deny_unknown_fields)]
 pub struct GenericConfig {
     icon: Option<PathBuf>,
     #[serde(default)]
