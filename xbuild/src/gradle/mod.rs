@@ -233,5 +233,49 @@ pub fn build(env: &BuildEnv, libraries: Vec<(Target, PathBuf)>, out: &Path) -> R
             _ => unreachable!(),
         });
     std::fs::copy(output, out)?;
+
+    if format == Format::Aab {
+        if let Some(pem) = env.target().pem() {
+            let openssl = which::which("openssl").context("OpenSSL not found")?;
+            let jarsigner = which::which("jarsigner").context("jarsigner not found")?;
+            let keystore = gradle.join("keystore.jks");
+            let password = "password";
+            let alias = "key";
+
+            task::run(
+                Command::new(openssl)
+                    .current_dir(&gradle)
+                    .arg("pkcs12")
+                    .arg("-export")
+                    .arg("-in")
+                    .arg(pem)
+                    .arg("-out")
+                    .arg(&keystore)
+                    .arg("-name")
+                    .arg(alias)
+                    .arg("-password")
+                    .arg(format!("pass:{}", password)),
+            )?;
+
+            task::run(
+                Command::new(jarsigner)
+                    .current_dir(&gradle)
+                    .arg("-keystore")
+                    .arg(&keystore)
+                    .arg("-storepass")
+                    .arg(password)
+                    .arg("-verbose")
+                    .arg("-sigalg")
+                    .arg("SHA256withRSA")
+                    .arg("-digestalg")
+                    .arg("SHA-256")
+                    .arg(out)
+                    .arg(alias),
+            )?;
+
+            let _ = std::fs::remove_file(keystore);
+        }
+    }
+
     Ok(())
 }

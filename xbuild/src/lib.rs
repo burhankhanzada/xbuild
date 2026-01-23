@@ -427,6 +427,7 @@ impl BuildTargetArgs {
             provisioning_profile,
             api_key,
             android_gradle,
+            pem: self.pem,
         })
     }
 }
@@ -443,6 +444,7 @@ pub struct BuildTarget {
     provisioning_profile: Option<Vec<u8>>,
     api_key: Option<PathBuf>,
     android_gradle: bool,
+    pem: Option<PathBuf>,
 }
 
 impl BuildTarget {
@@ -493,6 +495,10 @@ impl BuildTarget {
 
     pub fn api_key(&self) -> Option<&Path> {
         self.api_key.as_deref()
+    }
+
+    pub fn pem(&self) -> Option<&Path> {
+        self.pem.as_deref()
     }
 }
 
