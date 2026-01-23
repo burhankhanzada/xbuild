@@ -130,4 +130,5 @@ pub struct Package {
     pub name: String,
     pub version: Inheritable<String>,
     pub description: Option<Inheritable<String>>,
+    pub metadata: Option<toml::Value>,
 }

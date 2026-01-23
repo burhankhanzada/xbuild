@@ -21,6 +21,29 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn apply_metadata(&mut self, metadata: &toml::Value) -> Result<()> {
+        let config: RawConfig = serde::Deserialize::deserialize(metadata.clone())?;
+        if let Some(generic) = config.generic {
+            self.generic = generic;
+        }
+        if let Some(android) = config.android {
+            self.android = android;
+        }
+        if let Some(ios) = config.ios {
+            self.ios = ios;
+        }
+        if let Some(linux) = config.linux {
+            self.linux = linux;
+        }
+        if let Some(macos) = config.macos {
+            self.macos = macos;
+        }
+        if let Some(windows) = config.windows {
+            self.windows = windows;
+        }
+        Ok(())
+    }
+
     pub fn parse<P: AsRef<Path>>(path: P) -> Result<Self> {
         if !path.as_ref().exists() {
             return Ok(Default::default());

@@ -524,6 +524,9 @@ impl BuildEnv {
         let package = cargo.manifest().package.as_ref().unwrap(); // Caller should guarantee that this is a valid package
         let manifest = cargo.package_root().join("manifest.yaml");
         let mut config = Config::parse(manifest)?;
+        if let Some(metadata) = &package.metadata {
+            config.apply_metadata(metadata)?;
+        }
         let build_target = args.build_target.build_target(&config)?;
         config.apply_rust_package(package, cargo.workspace_manifest(), build_target.opt())?;
         let icon = config
