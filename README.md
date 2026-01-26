@@ -30,6 +30,19 @@ info: component 'rust-std' for target 'aarch64-linux-android' is up to date
 
 ![x](https://user-images.githubusercontent.com/741807/162616805-30b48faa-84f0-4fec-851a-4c94fd35c6bd.png)
 
+## Android App Bundle
+
+To build an Android App Bundle (AAB):
+```sh
+x build --release --platform android --format aab
+```
+
+This will produce `target/x/release/android/<app>.aab`.
+To sign the AAB you can use `jarsigner`:
+```sh
+jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore my.keystore my.aab my-alias
+```
+
 ## Troubleshooting
 
 ### Command not found
