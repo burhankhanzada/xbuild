@@ -227,5 +227,36 @@ pub fn build(env: &BuildEnv, libraries: Vec<(Target, PathBuf)>, out: &Path) -> R
             _ => unreachable!(),
         });
     std::fs::copy(output, out)?;
+
+    if let (Some(keystore), Some(alias), Some(storepass), Some(keypass)) = (
+        env.target().keystore(),
+        env.target().key_alias(),
+        env.target().keystore_password(),
+        env.target().key_password(),
+    ) {
+        let keystore_path = platform_dir.join("keystore.jks");
+        std::fs::write(&keystore_path, keystore)?;
+        let status = Command::new("jarsigner")
+            .arg("-verbose")
+            .arg("-sigalg")
+            .arg("SHA256withRSA")
+            .arg("-digestalg")
+            .arg("SHA-256")
+            .arg("-keystore")
+            .arg(&keystore_path)
+            .arg("-storepass")
+            .arg(storepass)
+            .arg("-keypass")
+            .arg(keypass)
+            .arg(out)
+            .arg(alias)
+            .status()?;
+
+        std::fs::remove_file(keystore_path)?;
+
+        if !status.success() {
+            anyhow::bail!("jarsigner failed");
+        }
+    }
     Ok(())
 }

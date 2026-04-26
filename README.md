@@ -38,9 +38,22 @@ x build --release --platform android --format aab
 ```
 
 This will produce `target/x/release/android/<app>.aab`.
-To sign the AAB you can use `jarsigner`:
+To sign the AAB automatically, provide the keystore details:
 ```sh
-jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA-256 -keystore my.keystore my.aab my-alias
+x build --release --platform android --format aab \
+    --keystore my.keystore \
+    --keystore-password password \
+    --key-alias my-alias \
+    --key-password password
+```
+
+You can also use environment variables:
+```sh
+export X_KEYSTORE=$(cat my.keystore | base64)
+export X_KEYSTORE_PASSWORD=password
+export X_KEY_ALIAS=my-alias
+export X_KEY_PASSWORD=password
+x build --release --platform android --format aab
 ```
 
 ## Troubleshooting

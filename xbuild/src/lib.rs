@@ -331,6 +331,18 @@ pub struct BuildTargetArgs {
     /// Path to an api key.
     #[clap(long)]
     api_key: Option<PathBuf>,
+    /// Path to a keystore file.
+    #[clap(long)]
+    keystore: Option<PathBuf>,
+    /// Keystore password.
+    #[clap(long)]
+    keystore_password: Option<String>,
+    /// Key alias.
+    #[clap(long)]
+    key_alias: Option<String>,
+    /// Key password.
+    #[clap(long)]
+    key_password: Option<String>,
 }
 
 impl BuildTargetArgs {
@@ -416,6 +428,28 @@ impl BuildTargetArgs {
             None
         };
         let api_key = self.api_key;
+        let keystore = if let Some(path) = self.keystore {
+            anyhow::ensure!(
+                path.exists(),
+                "keystore file doesn't exist {}",
+                path.display()
+            );
+            Some(std::fs::read(path)?)
+        } else if let Ok(mut keystore) = std::env::var("X_KEYSTORE") {
+            keystore.retain(|c| !c.is_whitespace());
+            Some(base64::decode(&keystore)?)
+        } else {
+            None
+        };
+        let keystore_password = self
+            .keystore_password
+            .or_else(|| std::env::var("X_KEYSTORE_PASSWORD").ok());
+        let key_alias = self
+            .key_alias
+            .or_else(|| std::env::var("X_KEY_ALIAS").ok());
+        let key_password = self
+            .key_password
+            .or_else(|| std::env::var("X_KEY_PASSWORD").ok());
         Ok(BuildTarget {
             opt,
             platform,
@@ -427,6 +461,10 @@ impl BuildTargetArgs {
             provisioning_profile,
             api_key,
             android_gradle,
+            keystore,
+            keystore_password,
+            key_alias,
+            key_password,
         })
     }
 }
@@ -443,6 +481,10 @@ pub struct BuildTarget {
     provisioning_profile: Option<Vec<u8>>,
     api_key: Option<PathBuf>,
     android_gradle: bool,
+    keystore: Option<Vec<u8>>,
+    keystore_password: Option<String>,
+    key_alias: Option<String>,
+    key_password: Option<String>,
 }
 
 impl BuildTarget {
@@ -493,6 +535,22 @@ impl BuildTarget {
 
     pub fn api_key(&self) -> Option<&Path> {
         self.api_key.as_deref()
+    }
+
+    pub fn keystore(&self) -> Option<&[u8]> {
+        self.keystore.as_deref()
+    }
+
+    pub fn keystore_password(&self) -> Option<&str> {
+        self.keystore_password.as_deref()
+    }
+
+    pub fn key_alias(&self) -> Option<&str> {
+        self.key_alias.as_deref()
+    }
+
+    pub fn key_password(&self) -> Option<&str> {
+        self.key_password.as_deref()
     }
 }
 
